@@ -24,13 +24,13 @@ function init(){
         }
     ).done((d)=>{
        
-        console.log(d);
+        //console.log(d);
         
         data = JSON.parse(d);
 
         drawChart();
 
-        console.log(minutesSince(data[0].dtime));
+        //console.log(minutesSince(data[0].dtime));
         
 
     })
@@ -94,7 +94,7 @@ function drawChart(){
           type: 'spline'
         },
         title: {
-          text: 'Brewing temperatures'
+          text: `Last recorded temperature: <b>${data[0].temperature}</b>`
         },
         subtitle: {
           text: `Next measurement in ${15 - minutesSince(data[0].dtime)} minutes (15 minute intervals)`
@@ -146,6 +146,11 @@ function getData(){
     let arr = data.map((x)=>{
         return [new Date(x.dtime).getTime(), x.temperature]
     })
+    arr.sort((a, b)=>{
+        if(a[0] > b[0]){ return 1;}
+        if(a[0] > b[0]){ return -1;}
+        return 0;
+    });
     return arr;
 
 }
