@@ -1,0 +1,18 @@
+.buttonBanner{ 
+    display: flex;
+    justify-content: center;
+    /* align-content: center; */
+
+}
+.buttonBanner button {
+    margin: 1%
+}
+
+body {
+    background: linear-gradient(20deg, rgb(255, 255, 255), rgb(239, 253, 255))
+}
+
+
+.min {
+    background-color: rgb(188, 188, 243);
+}
