@@ -97,7 +97,7 @@ function drawChart(){
           text: 'Brewing temperatures'
         },
         subtitle: {
-          text: `Next measurement in ${30 - minutesSince(data[0].dtime)} minutes (30 minute intervals)`
+          text: `Next measurement in ${15 - minutesSince(data[0].dtime)} minutes (15 minute intervals)`
         },
         xAxis: {
           type: 'datetime',
