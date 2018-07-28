@@ -62,7 +62,7 @@ function drawTable(){
  * @param {String} dateString 
  */
 function minutesSince(dateString){
-    let d = new Date(dateString).getTime();
+    let d = new Date(dateString.replace(' ', 'T')+'Z').getTime();
     let a = (Date.now() - d) / 1000 / 60;
     return a - (a % 1);
 }
@@ -135,7 +135,7 @@ function drawChart(){
         // of 1970/71 in order to be compared on the same x axis. Note
         // that in JavaScript, months start at 0 for January, 1 for February etc.
         series: [{
-          name: "Temperature",
+          name: 'Temperature',
           data: getData()
         }]
     });
@@ -144,7 +144,7 @@ function drawChart(){
 function getData(){
 
     let arr = data.map((x)=>{
-        return [new Date(x.dtime.replace(" ","T")+"Z").getTime(), x.temperature]
+        return [new Date(x.dtime.replace(' ','T')+'Z').getTime(), x.temperature]
     })
     arr.sort((a, b)=>{
         if(a[0] > b[0]){ return 1;}
