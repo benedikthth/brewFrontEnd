@@ -144,7 +144,7 @@ function drawChart(){
 function getData(){
 
     let arr = data.map((x)=>{
-        return [new Date(x.dtime).getTime(), x.temperature]
+        return [new Date(x.dtime.replace(" ","T")+"Z").getTime(), x.temperature]
     })
     arr.sort((a, b)=>{
         if(a[0] > b[0]){ return 1;}
