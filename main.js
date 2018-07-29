@@ -24,10 +24,10 @@ function init(){
         }
     ).done((d)=>{
        
-        //console.log(d);
         
         data = JSON.parse(d);
-
+        data = data.filter((x)=>{return x!=null});
+        
         drawChart();
 
         //console.log(minutesSince(data[0].dtime));
