@@ -26,7 +26,7 @@ function init(){
        
         
         data = JSON.parse(d);
-        data = data.filter((x)=>{return x!=null});
+       
         
         drawChart();
 
@@ -135,7 +135,7 @@ function drawChart(){
 
           alternateGridColor: null,
 
-
+          min: 0,
           plotBands: [
               { // Light air
                 from: 27,
