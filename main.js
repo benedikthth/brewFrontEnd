@@ -18,9 +18,16 @@ $(document).ready(()=>{
 function init(){
     //
     let hour = 4;
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${12}` }).done((d)=>{
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${6}` }).done((d)=>{
         d = JSON.parse(d);
         $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${15 - minutesSince(d[0].dtime)} minutes (15 minute intervals)`);
+        //data = JSON.parse(d);
+        drawChart(d, 'data for the last 6 hours', '6HourChart');
+        //console.log(minutesSince(data[0].dtime));
+    });
+
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${12}` }).done((d)=>{
+        d = JSON.parse(d);
         //data = JSON.parse(d);
         drawChart(d, 'data for the last 12 hours', '12HourChart');
         //console.log(minutesSince(data[0].dtime));
