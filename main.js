@@ -3,7 +3,7 @@
 let maxColor = {r: 150, g: 0, b:0},
 minColor = {r: 0, g: 150, b:200};
 
-let data = [];
+//let data = [];
 
 $(document).ready(()=>{    
     init();
@@ -17,42 +17,29 @@ $(document).ready(()=>{
  */
 function init(){
     //
-    $.ajax(
-        {
-            url: `http://www.brewApi.spock.is/temperature`,
-
-        }
-    ).done((d)=>{
-       
-        
-        data = JSON.parse(d);
-       
-        
-        drawChart();
-
+    let hour = 4;
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${12}` }).done((d)=>{
+        d = JSON.parse(d);
+        $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${15 - minutesSince(d[0].dtime)} minutes (15 minute intervals)`);
+        //data = JSON.parse(d);
+        drawChart(d, 'data for the last 12 hours', '12HourChart');
         //console.log(minutesSince(data[0].dtime));
-        
+    });
 
-    })
-}
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${24}` }).done((d)=>{
+        d = JSON.parse(d);
+        //data = JSON.parse(d);
+        drawChart(d, 'data for the last 24 hours', '24HourChart');
+        //console.log(minutesSince(data[0].dtime));
+    });
 
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${48}` }).done((d)=>{
+        d = JSON.parse(d);
+        //data = JSON.parse(d);
+        drawChart(d, 'data for the last 48 hours', '48HourChart');
+        //console.log(minutesSince(data[0].dtime));
+    });
 
-
-/**
- * Assume that the table should only display for one station at a time.
- * 
- */
-function drawTable(){
-    //clear the old table.
-    $('#table').empty();
-    //default language is english.
-    
- 
-
-    //table row for sum.
-  
-    //append table to div.
-    //$('#table').append(table);
 }
 
 
@@ -87,36 +74,40 @@ function addTd(tr, val, max, min){
 }
 let poop ;
 
-function drawChart(){
+function drawChart(data, title, renderingDiv){
 
-    Highcharts.chart('chart', {
+    Highcharts.chart(renderingDiv, {
 
         tooltip: {
             formatter: function () {
                 let d = new Date(this.x);
                 let timeAgo = Math.floor((Date.now() - d.getTime()) / 1000 / 60);
-                let mstring = 'minutes ago';
+                let mstring = (timeAgo === 1)? 'minute ago':'minutes ago';
                 if(timeAgo >= 60){
                     timeAgo = Math.round(timeAgo / 60);
                     mstring = (timeAgo === 1)? 'hour ago' : 'hours ago';
                 }
                 
                 return `${d.getDate()}/${d.getMonth()+1} - ${d.getHours()}:${d.getMinutes()}<br />
-                    <b>${this.y} C </b> <br />
+                    <b>${this.y}°C </b> <br />
                     <em>${timeAgo} ${mstring}</em>
                     `;
             }
         },
 
+        legend: {
+            enabled: false
+        },
+
         chart: {
-          type: 'spline'
+          type: 'spline',
+          backgroundColor: null
         },
+        
         title: {
-          text: `Last recorded temperature: <b>${data[0].temperature}</b>`
+          text: title
         },
-        subtitle: {
-          text: `Next measurement in ${15 - minutesSince(data[0].dtime)} minutes (15 minute intervals)`
-        },
+        
         xAxis: {
           type: 'datetime',
           dateTimeLabelFormats: { // don't display the dummy year
@@ -127,20 +118,20 @@ function drawChart(){
             text: 'Date'
           }
         },
-
+        
+        
         yAxis: {
           title: {
-            text: 'Temperature (C)'
+            text: 'Temperature (°C)'
           },
 
           alternateGridColor: null,
-
           min: 0,
           plotBands: [
               { // Light air
                 from: 27,
                 to: Infinity,
-                color: 'rgba(255, 50, 50, 0.1)',
+                color: 'rgba(255, 165, 0, 0.2)',
                 label: {
                     text: 'Too hot',
                     style: {
@@ -151,7 +142,7 @@ function drawChart(){
             {
                 from: 22,
                 to: 27,
-                color: 'rgba(255, 102, 0, 0.1)',
+                color: 'rgba(185, 216, 0, 0.3)',
                 label: {
                     text: 'Getting too hot',
                     style: {
@@ -160,11 +151,22 @@ function drawChart(){
                 }
             },
             {
-                from: 18, 
+                from: 20, 
                 to: 22,
-                color: 'rgba(22, 230, 22, 0.1)',
+                color: 'rgba(0, 255, 0, 0.4)',
                 label: {
                     text: 'Ideal',
+                    style: {
+                        color: '#606060'
+                    }
+                }
+            },
+            {
+                from: 12,
+                to: 20,
+                color: 'rgba(70, 255, 152, 0.3)',
+                label: {
+                    text: 'Getting too cold',
                     style: {
                         color: '#606060'
                     }
@@ -172,8 +174,8 @@ function drawChart(){
             }, 
             {
                 from: -Infinity,
-                to: 18,
-                color: 'rgba(22, 220, 230, 0.1)',
+                to: 12,
+                color: 'rgba(0, 255, 255, 0.2)',
                 label: {
                     text: 'Too Cold',
                     style: {
@@ -194,19 +196,19 @@ function drawChart(){
         plotOptions: {
           spline: {
             marker: {
-              enabled: true
+              enabled: false
             }
           }
         },
       
         series: [{
-          name: 'Temperature',
-          data: getData()
+          name: 'Temperature (°C)',
+          data: getData(data)
         }]
     });
 }
 
-function getData(){
+function getData(data){
 
     let arr = data.map((x)=>{
         return [new Date(x.dtime.replace(' ','T')+'Z').getTime(), x.temperature]

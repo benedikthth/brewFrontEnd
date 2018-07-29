@@ -15,4 +15,10 @@ body {
 
 .min {
     background-color: rgb(188, 188, 243);
+    dummy: rgb(22, 220, 230);
+}
+
+.chart{
+    width: 95%;
+    margin: auto;
 }
