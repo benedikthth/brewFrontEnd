@@ -118,7 +118,7 @@ function drawChart(){
         tooltip: {
 
           headerFormat: '<b>{series.name}</b><br>',
-          pointFormat: '{point.x:%e. %b}: {point.y:.2f} c'
+          pointFormat: '{point.x:%e. %b - %H:%M}: <b>{point.y:.2f} c</b>'
         },
       
         plotOptions: {
@@ -129,11 +129,6 @@ function drawChart(){
           }
         },
       
-        colors: ['#6CF', '#39F', '#06C', '#036', '#000'],
-      
-        // Define the data points. All series have a dummy year
-        // of 1970/71 in order to be compared on the same x axis. Note
-        // that in JavaScript, months start at 0 for January, 1 for February etc.
         series: [{
           name: 'Temperature',
           data: getData()
@@ -146,26 +141,7 @@ function getData(){
     let arr = data.map((x)=>{
         return [new Date(x.dtime.replace(' ','T')+'Z').getTime(), x.temperature]
     })
-    // arr.sort((a, b)=>{
-    //     if(a[0] > b[0]){ return 1;}
-    //     if(a[0] > b[0]){ return -1;}
-    //     return 0;
-    // });
+  
     return arr.reverse();
 
 }
-
-/**
- * Get the minimum temperature for the data.
- * 
- */
-/*
-function minVal(){
-    let d = data.map((x)=>{return x.temperature});
-    return Math.min.apply(null, d);
-}
-function maxVal(){
-    let d = data.map((x)=>{return x.temperature});
-    return Math.max.apply(null, d);
-}
-*/
