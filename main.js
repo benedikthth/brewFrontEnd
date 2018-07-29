@@ -85,11 +85,29 @@ function addTd(tr, val, max, min){
     }
     tr.append(td);
 }
-
+let poop ;
 
 function drawChart(){
 
     Highcharts.chart('chart', {
+
+        tooltip: {
+            formatter: function () {
+                let d = new Date(this.x);
+                let timeAgo = Math.floor((Date.now() - d.getTime()) / 1000 / 60);
+                let mstring = 'minutes ago';
+                if(timeAgo >= 60){
+                    timeAgo = Math.round(timeAgo / 60);
+                    mstring = (timeAgo === 1)? 'hour ago' : 'hours ago';
+                }
+                
+                return `${d.getDate()}/${d.getMonth()+1} - ${d.getHours()}:${d.getMinutes()}<br />
+                    <b>${this.y} C </b> <br />
+                    <em>${timeAgo} ${mstring}</em>
+                    `;
+            }
+        },
+
         chart: {
           type: 'spline'
         },
@@ -109,18 +127,70 @@ function drawChart(){
             text: 'Date'
           }
         },
+
         yAxis: {
           title: {
             text: 'Temperature (C)'
-          }
-          //min: minVal() - 5
+          },
+
+          alternateGridColor: null,
+
+
+          plotBands: [
+              { // Light air
+                from: 27,
+                to: Infinity,
+                color: 'rgba(255, 50, 50, 0.1)',
+                label: {
+                    text: 'Too hot',
+                    style: {
+                        color: '#606060'
+                    }
+                }
+            },
+            {
+                from: 22,
+                to: 27,
+                color: 'rgba(255, 102, 0, 0.1)',
+                label: {
+                    text: 'Getting too hot',
+                    style: {
+                        color: '#606060'
+                    }
+                }
+            },
+            {
+                from: 18, 
+                to: 22,
+                color: 'rgba(22, 230, 22, 0.1)',
+                label: {
+                    text: 'Ideal',
+                    style: {
+                        color: '#606060'
+                    }
+                }
+            }, 
+            {
+                from: -Infinity,
+                to: 18,
+                color: 'rgba(22, 220, 230, 0.1)',
+                label: {
+                    text: 'Too Cold',
+                    style: {
+                        color: '#606060'
+                    }
+                }
+            }
+          ]
+
         },
+        /*
         tooltip: {
 
           headerFormat: '<b>{series.name}</b><br>',
-          pointFormat: '{point.x:%e. %b - %H:%M}: <b>{point.y:.2f} c</b>'
+          pointFormat: '{point.x:%e. %b - %H:%M}: <b>{point.y:.2f} c</b> <br /> <i>{1+2}</i>'
         },
-      
+        */
         plotOptions: {
           spline: {
             marker: {
