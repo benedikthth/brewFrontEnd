@@ -40,10 +40,22 @@ function init(){
         //console.log(minutesSince(data[0].dtime));
     });
 
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${48}` }).done((d)=>{
+    $.ajax( {url: `http://www.brewApi.spock.is/temperature` }).done((d)=>{
         d = JSON.parse(d);
-        //data = JSON.parse(d);
-        drawChart(d, 'data for the last 48 hours', '48HourChart');
+        //data = JSON.arse(d);
+        let date = new Date(d[d.length -1].dtime);
+        let interval = Math.floor((Date.now() - date)/1000/60);
+        let intervalValue = (interval === 1)? 'minute': 'minutes';
+        if(interval >= 60){ 
+            interval = Math.floor(interval / 60);
+            intervalValue = (interval === 1)? 'hour': 'hours';
+            if(interval >= 24){
+                interval = Math.floor(interval / 24);
+                intervalValue = (interval === 1)?'day':'days';
+            }
+        }
+        
+        drawChart(d, `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`, 'restHourChart');
         //console.log(minutesSince(data[0].dtime));
     });
 
