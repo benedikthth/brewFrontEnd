@@ -2,10 +2,12 @@
 
 let maxColor = {r: 150, g: 0, b:0},
 minColor = {r: 0, g: 150, b:200};
-
+let lastChecked = null;
 //let data = [];
 
-$(document).ready(()=>{    
+$(document).ready(()=>{
+    lastChecked = Cookies.get('lastChecked') || Date.now();
+    Cookies.set('lastChecked', Date.now());
     init();
 });
 
@@ -94,6 +96,23 @@ function addTd(tr, val, max, min){
 let poop ;
 
 function drawChart(data, title, renderingDiv){
+    //configure plot-bands
+    let xPlotBands;
+    if( Date.now() - lastChecked > 1000 * 60 * 30){
+        xPlotBands = [{ // mark the weekend
+            color: 'rgb(255, 255, 150)',
+            label: {
+                text: 'New<br />Measurements.',
+                style: {
+                    color: '#606060'
+                }
+            },
+            from: lastChecked,
+            to: Date.now()
+        }]   
+    } else {
+        xPlotBands = null;
+    }
 
     Highcharts.chart(renderingDiv, {
 
@@ -128,14 +147,15 @@ function drawChart(data, title, renderingDiv){
         },
         
         xAxis: {
-          type: 'datetime',
-          dateTimeLabelFormats: { // don't display the dummy year
+            type: 'datetime',
+            dateTimeLabelFormats: { // don't display the dummy year
             month: '%e. %b',
             year: '%b'
-          },
-          title: {
+            },
+            title: {
             text: 'Date'
-          }
+            },
+            plotBands: xPlotBands
         },
         
         
