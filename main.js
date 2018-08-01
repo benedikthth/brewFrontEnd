@@ -6,6 +6,7 @@ let lastChecked = null;
 //let data = [];
 
 let bottlingDay = new Date("2018-08-11T12:00:00.000Z");
+let earlyBD = new Date("2018-08-05T12:00:00.000Z");
 
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
@@ -176,6 +177,20 @@ function drawChart(data, title, renderingDiv, withEndDate){
                         fontStyle: 'italic'
                     },
                     text: `Bottling day. (${withEndDate.getDate()}/${withEndDate.getMonth()+1})`
+                },
+                zIndex: 3
+            },{
+                color: '#AAAAAA',
+                dashStyle: 'dash',
+                width: 1,
+                value: earlyBD,
+                label: {
+                    rotation: 90,
+                    y: 20,
+                    style: {
+                        fontStyle: 'italic'
+                    },
+                    text: `Proposed earlier Bottling day. (${earlyBD.getDate()}/${earlyBD.getMonth()+1})`
                 },
                 zIndex: 3
             }]
