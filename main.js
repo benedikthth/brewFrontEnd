@@ -5,6 +5,8 @@ minColor = {r: 0, g: 150, b:200};
 let lastChecked = null;
 //let data = [];
 
+let bottlingDay = new Date("2018-08-11T12:00:00.000Z");
+
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
     Cookies.set('lastChecked', Date.now());
@@ -44,7 +46,7 @@ function init(){
 
     $.ajax( {url: `http://www.brewApi.spock.is/temperature` }).done((d)=>{
         d = JSON.parse(d);
-        //data = JSON.arse(d);
+
         let date = new Date(d[d.length -1].dtime);
         let interval = Math.floor((Date.now() - date)/1000/60);
         let intervalValue = (interval === 1)? 'minute': 'minutes';
@@ -52,12 +54,12 @@ function init(){
             interval = Math.floor(interval / 60);
             intervalValue = (interval === 1)? 'hour': 'hours';
             if(interval >= 24){
-                interval = Math.floor(interval / 24);
+                interval = Math.ceil(interval / 24);
                 intervalValue = (interval === 1)?'day':'days';
             }
         }
         
-        drawChart(d, `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`, 'restHourChart');
+        drawChart(d, `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`, 'restHourChart', bottlingDay);
         //console.log(minutesSince(data[0].dtime));
     });
 
@@ -95,8 +97,9 @@ function addTd(tr, val, max, min){
 }
 let poop ;
 
-function drawChart(data, title, renderingDiv){
+function drawChart(data, title, renderingDiv, withEndDate){
     //configure plot-bands
+    $(renderingDiv).empty();
     let xPlotBands;
     if( Date.now() - lastChecked > 1000 * 60 * 30){
         xPlotBands = [{ // mark the weekend
@@ -113,6 +116,8 @@ function drawChart(data, title, renderingDiv){
     } else {
         xPlotBands = null;
     }
+
+    withEndDate = withEndDate || null;
 
     Highcharts.chart(renderingDiv, {
 
@@ -149,13 +154,31 @@ function drawChart(data, title, renderingDiv){
         xAxis: {
             type: 'datetime',
             dateTimeLabelFormats: { // don't display the dummy year
-            month: '%e. %b',
-            year: '%b'
+                month: '%e. %b',
+                year: '%b'
             },
             title: {
-            text: 'Date'
+                text: 'Date'
             },
-            plotBands: xPlotBands
+            plotBands: xPlotBands,
+            
+            max: (withEndDate === null)? null : new Date(withEndDate.getTime() + 1000 * 60 * 60 * 3),
+
+            plotLines: (withEndDate === null)? null : [{
+                color: '#AAAAAA',
+                dashStyle: 'dash',
+                width: 1,
+                value: withEndDate,
+                label: {
+                    rotation: 90,
+                    y: 20,
+                    style: {
+                        fontStyle: 'italic'
+                    },
+                    text: `Bottling day. (${withEndDate.getDate()}/${withEndDate.getMonth()+1})`
+                },
+                zIndex: 3
+            }]
         },
         
         
