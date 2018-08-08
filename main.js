@@ -5,8 +5,7 @@ minColor = {r: 0, g: 150, b:200};
 let lastChecked = null;
 //let data = [];
 
-let bottlingDay = new Date("2018-08-11T12:00:00.000Z");
-let earlyBD = new Date("2018-08-05T12:00:00.000Z");
+let bottlingDay = new Date("2018-08-24T12:00:00.000Z");
 
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
@@ -25,6 +24,8 @@ function init(){
     let hour = 4;
     $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${6}` }).done((d)=>{
         d = JSON.parse(d);
+        console.log(d);
+        
         $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${5 - minutesSince(d[0].dtime)} minutes (5 minute intervals)`);
         //data = JSON.parse(d);
         drawChart(d, 'data for the last 6 hours', '6HourChart');
@@ -177,20 +178,6 @@ function drawChart(data, title, renderingDiv, withEndDate){
                         fontStyle: 'italic'
                     },
                     text: `Bottling day. (${withEndDate.getDate()}/${withEndDate.getMonth()+1})`
-                },
-                zIndex: 3
-            },{
-                color: '#AAAAAA',
-                dashStyle: 'dash',
-                width: 1,
-                value: earlyBD,
-                label: {
-                    rotation: 90,
-                    y: 20,
-                    style: {
-                        fontStyle: 'italic'
-                    },
-                    text: `Proposed earlier Bottling day. (${earlyBD.getDate()}/${earlyBD.getMonth()+1})`
                 },
                 zIndex: 3
             }]
