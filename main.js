@@ -1,5 +1,5 @@
 'use strict';
-
+let path = 'http://www.brewApi.spock.is';
 let maxColor = {r: 150, g: 0, b:0},
 minColor = {r: 0, g: 150, b:200};
 let lastChecked = null;
@@ -9,7 +9,7 @@ let bottlingDay = new Date("2018-08-24T12:00:00.000Z");
 
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
-    Cookies.set('lastChecked', Date.now());
+    Cookies.set('lastChecked', Date.now());// - 1000 * 60 * 60 * 20);
     init();
 });
 
@@ -21,33 +21,61 @@ $(document).ready(()=>{
  */
 function init(){
     //
-    let hour = 4;
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${6}` }).done((d)=>{
-        d = JSON.parse(d);
-        console.log(d);
+
+    let xPlotBands;
+    if( Date.now() - lastChecked > 1000 * 60 * 30){
+        xPlotBands = [{ // mark the weekend
+            color: 'rgb(255, 255, 150)',
+            label: {
+                text: 'New<br />Measurements.',
+                style: {
+                    color: '#606060'
+                }
+            },
+            from: lastChecked,
+            to: Date.now()
+        }]   
+    } else {
+        xPlotBands = [];
+    }
+
+    $.when( $.ajax( `${path}/temperature?hourLimit=${6}` ), $.ajax(`${path}/temperature/average?hourLimit=${6}`) )
+    .done((d, avg)=>{
+        //console.log(d);
+        
+        d = JSON.parse(d[0]);
+        avg = JSON.parse(avg[0]);
         
         $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${5 - minutesSince(d[0].dtime)} minutes (5 minute intervals)`);
         //data = JSON.parse(d);
-        drawChart(d, 'data for the last 6 hours', '6HourChart');
+        drawChart('data for the last 6 hours', '6HourChart', d, avg.avg, null, xPlotBands);
         //console.log(minutesSince(data[0].dtime));
     });
 
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${12}` }).done((d)=>{
-        d = JSON.parse(d);
+
+
+    $.when( $.ajax( `${path}/temperature?hourLimit=${12}`), $.ajax(`${path}/temperature/average?hourLimit=${12}`) )
+    .done((d, avg)=>{
+        d = JSON.parse(d[0]);
+        avg = JSON.parse(avg[0]);
         //data = JSON.parse(d);
-        drawChart(d, 'data for the last 12 hours', '12HourChart');
+        drawChart('data for the last 12 hours', '12HourChart', d, avg.avg, null, xPlotBands);
         //console.log(minutesSince(data[0].dtime));
     });
 
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature?hourLimit=${24}` }).done((d)=>{
-        d = JSON.parse(d);
+    $.when( $.ajax(`${path}/temperature?hourLimit=${24}`), $.ajax(`${path}/temperature/average?hourLimit=${24}`) )
+    .done((d, avg)=>{
+        d = JSON.parse(d[0]);
+        avg = JSON.parse(avg[0]);
         //data = JSON.parse(d);
-        drawChart(d, 'data for the last 24 hours', '24HourChart');
+        drawChart('data for the last 24 hours', '24HourChart', d, avg.avg, null, xPlotBands);
         //console.log(minutesSince(data[0].dtime));
     });
 
-    $.ajax( {url: `http://www.brewApi.spock.is/temperature` }).done((d)=>{
-        d = JSON.parse(d);
+    $.when($.ajax( `${path}/temperature`), $.ajax(`${path}/temperature/average`))
+    .done((d, avg)=>{
+        d = JSON.parse(d[0]);
+        avg = JSON.parse(avg[0])
 
         let date = new Date(d[d.length -1].dtime);
         let interval = Math.floor((Date.now() - date)/1000/60);
@@ -61,7 +89,30 @@ function init(){
             }
         }
         
-        drawChart(d, `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`, 'restHourChart', bottlingDay);
+        let londonTrip = { // mark london trip
+            color: 'rgb(200, 200, 200)',
+            label: {
+                text: 'London.',
+                style: {
+                    color: '#606060'
+                }
+            },
+            from: ""+new Date(2018, 7, 14).getTime(),
+            to: new Date(2018, 7, 19).getTime()
+        };
+
+        let nxplotbands = (xPlotBands.length === 0)?[londonTrip]:[xPlotBands[0], londonTrip];
+
+        console.log(nxplotbands);
+        
+        drawChart(
+            `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`,
+            'restHourChart',
+            d,
+            avg.avg,
+            bottlingDay,
+            nxplotbands
+        );
         //console.log(minutesSince(data[0].dtime));
     });
 
@@ -99,25 +150,22 @@ function addTd(tr, val, max, min){
 }
 let poop ;
 
-function drawChart(data, title, renderingDiv, withEndDate){
+
+/**
+ * 
+ * 
+ * @param {String} title title of graph
+ * @param {String} renderingDiv id of div to render graph in.
+ * @param {Object} data temperature tata to visualize in graph.
+ * @param {Number} average average value of data.
+ * @param {getDate} withEndDate //custom marker to signify bottling day.
+ */
+
+function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands){
+    console.log(average);
+    
     //configure plot-bands
     $(renderingDiv).empty();
-    let xPlotBands;
-    if( Date.now() - lastChecked > 1000 * 60 * 30){
-        xPlotBands = [{ // mark the weekend
-            color: 'rgb(255, 255, 150)',
-            label: {
-                text: 'New<br />Measurements.',
-                style: {
-                    color: '#606060'
-                }
-            },
-            from: lastChecked,
-            to: Date.now()
-        }]   
-    } else {
-        xPlotBands = null;
-    }
 
     withEndDate = withEndDate || null;
 
@@ -162,6 +210,7 @@ function drawChart(data, title, renderingDiv, withEndDate){
             title: {
                 text: 'Date'
             },
+
             plotBands: xPlotBands,
             
             max: (withEndDate === null)? null : new Date(withEndDate.getTime() + 1000 * 60 * 60 * 3),
@@ -188,7 +237,26 @@ function drawChart(data, title, renderingDiv, withEndDate){
           title: {
             text: 'Temperature (°C)'
           },
+          
+          plotLines: [{
+            color: '#ABABAB', 
+            dashStyle: 'dash',
+            width: 1,
+            value: average,
+            label: {
+                rotation: 0,
+                x: 300,
+                y: 10,
+                style: {
+                    fontStyle: 'italic',
+                    color: '#ABABAB'
+                },
+                text: `Average temperature: ${average.toFixed(2)}°C`
+            },
+            zIndex: 3
 
+          }],
+          
           alternateGridColor: null,
           min: 0,
           plotBands: [
