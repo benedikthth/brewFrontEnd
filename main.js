@@ -3,12 +3,12 @@ let path = 'http://www.brewApi.spock.is';
 let lastChecked = null;
 
 
-let idealMin = 20; 
-let idealMax = 22;
+let idealMin = 18; 
+let idealMax = 20;
 //let data = [];
 
-let bottlingDay = new Date("2018-08-24T12:00:00.000Z");
-
+let bottlingDay = new Date("2018-10-08T12:00:00.000Z");
+let dryHopDay = new Date("2018-10-01")
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
     Cookies.set('lastChecked', Date.now());// - 1000 * 60 * 60 * 20);
@@ -80,19 +80,7 @@ function init(){
             }
         }
         
-        let londonTrip = { // mark london trip
-            color: 'rgb(200, 200, 200)',
-            label: {
-                text: 'London.',
-                style: {
-                    color: '#606060'
-                }
-            },
-            from: ""+new Date(2018, 7, 14).getTime(),
-            to: new Date(2018, 7, 19).getTime()
-        };
-
-        let nxplotbands = (xPlotBands.length === 0)?[londonTrip]:[xPlotBands[0], londonTrip];
+        
 
         //console.log(nxplotbands);
         
@@ -101,8 +89,8 @@ function init(){
             'restHourChart',
             d,
             avg.avg,
-            bottlingDay,
-            nxplotbands,
+            [{date:bottlingDay, text:'Bottling day'}, {date:dryHopDay, text:'Dryhop day'}],
+            xPlotBands,
             reg
         );
         //console.log(minutesSince(data[0].dtime));
@@ -149,13 +137,13 @@ let poop ;
  * @param {String} renderingDiv id of div to render graph in.
  * @param {Object} data temperature tata to visualize in graph.
  * @param {Number} average average value of data.
- * @param {getDate} withEndDate custom marker to signify bottling day.
+ * @param {getDate} markers Markers.
  * @param {Object} xPlotBands any plot band that is useful.
  * @param {Object} regression object that represents data needed to form regression line
  * @param {Number} regressionLineLength number that represents the length of the regression line in seconds.
  */
 
-function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, regression, regressionLineLength){
+function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regression, regressionLineLength){
     
 
     let series = [{
@@ -205,8 +193,7 @@ function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, 
                 hover: {
                     lineWidth: 0
                 }
-            },
-            //enableMouseTracking: false
+            }
         });
 
     }
@@ -215,8 +202,45 @@ function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, 
     //configure plot-bands
     $(renderingDiv).empty();
 
-    withEndDate = withEndDate || null;
+    markers = markers || null;
 
+    if(markers){
+        
+        markers = markers.map(x=>{return {
+            color: '#AAAAAA',
+            dashStyle: 'dash',
+            width: 1,
+            value: x.date,
+            label: {
+                rotation: 90,
+                y: 20,
+                style: {
+                    fontStyle: 'italic'
+                },
+                text: `${x.text}. (${x.date.getDate()}/${x.date.getMonth()+1})`
+            }
+        }})
+    }
+    
+    //max should be the maximum of the maximum of datapoints, and maximum of markers.
+    let max;
+    if(markers){
+
+
+        let mx = markers[0].value.getTime();
+        markers.forEach(i => {
+            if( i.value.getTime() > mx){
+                mx = i.value.getTime()
+            }
+        });
+
+        max = Math.max(new Date(data[0].dtime).getTime() , mx) + 1000 * 60 * 60 * 3;
+
+    } else {
+        max = null;
+    }
+    
+    
     Highcharts.chart(renderingDiv, {
 
         tooltip: {
@@ -273,23 +297,13 @@ function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, 
 
             plotBands: xPlotBands,
             
-            max: (withEndDate === null)? null : new Date(withEndDate.getTime() + 1000 * 60 * 60 * 3),
 
-            plotLines: (withEndDate === null)? null : [{
-                color: '#AAAAAA',
-                dashStyle: 'dash',
-                width: 1,
-                value: withEndDate,
-                label: {
-                    rotation: 90,
-                    y: 20,
-                    style: {
-                        fontStyle: 'italic'
-                    },
-                    text: `Bottling day. (${withEndDate.getDate()}/${withEndDate.getMonth()+1})`
-                },
-                zIndex: 3
-            }]
+            // max: (withEndDate === null)? null : new Date(withEndDate.getTime() + 1000 * 60 * 60 * 3),
+            max: max,
+
+            plotLines: (markers === null)? null :  markers,
+       
+
         },
         
         
@@ -332,7 +346,7 @@ function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, 
                 }
             },
             {
-                from: 22,
+                from: idealMax,
                 to: 27,
                 color: 'rgba(185, 216, 0, 0.3)',
                 label: {
@@ -355,7 +369,7 @@ function drawChart(title, renderingDiv, data, average, withEndDate, xPlotBands, 
             },
             {
                 from: 12,
-                to: 20,
+                to: idealMin,
                 color: 'rgba(70, 255, 152, 0.3)',
                 label: {
                     text: 'Getting too cold',
