@@ -218,7 +218,8 @@ function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regr
                     fontStyle: 'italic'
                 },
                 text: `${x.text}. (${x.date.getDate()}/${x.date.getMonth()+1})`
-            }
+            }, 
+            zIndex: 3
         }})
     }
     
