@@ -3,12 +3,12 @@ let path = 'http://www.brewApi.spock.is';
 let lastChecked = null;
 
 
-let idealMin = 18; 
-let idealMax = 20;
+let idealMin = 17; 
+let idealMax = 19;
 //let data = [];
 
-let bottlingDay = new Date("2018-10-08T12:00:00.000Z");
-let dryHopDay = new Date("2018-10-01")
+let bottlingDay = new Date("2019-02-02T12:00:00.000Z");
+let dryHopDay = new Date("2019-01-26T12:00:00.000Z")
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
     Cookies.set('lastChecked', Date.now());// - 1000 * 60 * 60 * 20);
