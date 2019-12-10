@@ -1,5 +1,6 @@
 'use strict';
-let path = 'http://www.brewApi.spock.is';
+// let path = 'http://www.brewApi.spock.is';
+    let path = 'http://localhost:9099'
 let lastChecked = null;
 
 
@@ -7,8 +8,8 @@ let idealMin = 17;
 let idealMax = 19;
 //let data = [];
 
-let bottlingDay = new Date("2019-02-16T12:00:00.000Z");
-let dryHopDay = new Date("2019-02-09T12:00:00.000Z")
+let bottlingDay = new Date("2019-12-19T12:00:00.000Z");
+// let dryHopDay = new Date("2019-12-09T12:00:00.000Z")
 $(document).ready(()=>{
     lastChecked = Cookies.get('lastChecked') || Date.now();
     Cookies.set('lastChecked', Date.now());// - 1000 * 60 * 60 * 20);
@@ -25,50 +26,51 @@ function init(){
     //
 
     let xPlotBands;
-    if( Date.now() - lastChecked > 1000 * 60 * 30){
-        xPlotBands = [{ // mark the weekend
-            color: 'rgb(255, 255, 150)',
-            label: {
-                text: 'New<br />Measurements.',
-                style: {
-                    color: '#606060'
-                }
-            },
-            from: lastChecked,
-            to: Date.now()
-        }]   
-    } else {
-        xPlotBands = [];
-    }
+    // if( Date.now() - lastChecked > 1000 * 60 * 30){
+    //     xPlotBands = [{ // mark the weekend
+    //         color: 'rgb(255, 255, 150)',
+    //         label: {
+    //             text: 'New<br />Measurements.',
+    //             style: {
+    //                 color: '#606060'
+    //             }
+    //         },
+    //         from: lastChecked,
+    //         to: Date.now()
+    //     }]   
+    // } else {
+    //     xPlotBands = [];
+    // }
 
-    $.when( 
-        $.ajax(`${path}/temperature?hourLimit=${6}` ), 
-        $.ajax(`${path}/temperature/average?hourLimit=${6}`),
-        $.ajax(`${path}/temperature/regression?minuteLimit=${60}`)
-    ).done((d, avg, regression)=>{
-        //console.log(d);
+    $.when(  $.ajax({url:`${path}/temperature?hourLimit=${6}`, dataType: 'json'}),
+        $.ajax({url:`${path}/temperature/regression`, dataType:'json'})
+    ).done((d, r)=>{
+        d=d[0];
+        r= r[0].slope;
         
-        d = JSON.parse(d[0]);
-        avg = JSON.parse(avg[0]);
-        regression = JSON.parse(regression[0]);
-        console.log(regression);
+        // d = JSON.parse(d[0]);
+        //avg = JSON.parse(avg[0]);
+        // regression = JSON.parse(regression[0]);
+        // console.log(regression);
+        console.log(minutesSince(d[d.length-1].time));
         
-        $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${5 - minutesSince(d[0].dtime)} minutes (5 minute intervals)`);
+        $('#heading').text(`Last measured temperature is ${d[0].temperature}°C - Next measurement in ${5 - minutesSince(d[0].time)} minutes (5 minute intervals)`);
         //data = JSON.parse(d);
-        drawChart('data for the last 6 hours', '6HourChart', d, avg.avg, null, xPlotBands, regression, 1000 * 60 * 60 );
+        drawChart('data for the last 6 hours', '6HourChart', d, 20, null, null, r, 1000 * 60 * 60 );
         //console.log(minutesSince(data[0].dtime));
     });
 
 
-    $.when( $.ajax( `${path}/temperature`),
-            $.ajax(`${path}/temperature/average`),
-            $.ajax(`${path}/temperature/regression?minuteLimit=90`)
-    ).done((d, avg, reg)=>{
-        d = JSON.parse(d[0]);
-        avg = JSON.parse(avg[0]);
-        reg = JSON.parse(reg[0]);
+    $.when( $.ajax( {url:`${path}/temperature`, dataType:'json'}),
+            // $.ajax(`${path}/temperature/average`),
+            $.ajax({url:`${path}/temperature/regression`, dataType:'json'})
+    ).done((d, reg)=>{
+        d = d[0];
+        console.log(d);
+        
+        reg = reg[0].slope;
 
-        let date = new Date(d[d.length -1].dtime);
+        let date = new Date(d[d.length -1].time);
         let interval = Math.floor((Date.now() - date)/1000/60);
         let intervalValue = (interval === 1)? 'minute': 'minutes';
         if(interval >= 60){ 
@@ -81,19 +83,16 @@ function init(){
         }
         
         
-
-        //console.log(nxplotbands);
-        
         drawChart(
             `Data since ${date.getDate()}/${date.getMonth()+1}, ${date.getHours()}:${date.getMinutes()}, (${interval} ${intervalValue} ago)`,
             'restHourChart',
             d,
-            avg.avg,
-            [{date:bottlingDay, text:'Bottling day'}, {date:dryHopDay, text:'Dryhop day'}],
-            xPlotBands,
-            reg
+            20,
+            [{date: bottlingDay, text:'Bottling day'}],//, {date:new Date(), text:'Dryhop day'}],
+            null,
+            null
         );
-        //console.log(minutesSince(data[0].dtime));
+        
     });
 
 }
@@ -105,7 +104,11 @@ function init(){
  * @param {String} dateString 
  */
 function minutesSince(dateString){
-    let d = new Date(dateString.replace(' ', 'T')+'Z').getTime();
+    // console.log(typeof(dateString));
+    
+    let d = new Date(dateString).getTime();
+    console.log(d);
+    
     let a = (Date.now() - d) / 1000 / 60;
     return a - (a % 1);
 }
@@ -128,7 +131,6 @@ function addTd(tr, val, max, min){
     }
     tr.append(td);
 }
-let poop ;
 
 
 /**
@@ -143,7 +145,7 @@ let poop ;
  * @param {Number} regressionLineLength number that represents the length of the regression line in seconds.
  */
 
-function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regression, regressionLineLength){
+function drawChart(title, renderingDiv, data, average, markers, xPlotBands, slope, regressionLineLength){
     
 
     let series = [{
@@ -151,37 +153,26 @@ function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regr
         data: getData(data)
     }];
 
-    if(regression !== null){
+    if(slope !== null){
 
-    
-
-        let R = regression.corr;
-        let M;
-        if(R !== null){
-            M = R * ( regression.stddevY / regression.stddevX);
-        } else {
-            M = 0;
-        }
-
-        console.log();
         
 
         //dummy line for now, starting at the last point. 
         let lineLength = regressionLineLength || 1000 * 60 * 60 * 12;
         let lastDatapoint = data[0]
-        let beginX = new Date(lastDatapoint.dtime).getTime();
+        let beginX = new Date(lastDatapoint.time).getTime();
         let endX = beginX + lineLength;
         let beginY = lastDatapoint.temperature;
 
         //Clickhouse measures time in seconds.
-        let endY = M * (endX - beginX)/1000 + beginY;//beginY + M * lineLength;
+        let endY = slope * (endX - beginX)/1000 + beginY;
         
         let dx = (endX - beginX)/4;
         let dy = (endY - beginY)/4;
         
         series.push({
             type: 'line',
-            color: (endY > idealMax || endY < idealMin)?'Orange':'lime',
+            color: (endY > idealMax || endY < idealMin)?'Orange':'cyan',
             name: 'Temperature prediction',
             data: [[beginX,beginY], [beginX+dx, beginY+dy],
                 [beginX+(2*dx), beginY+(2*dy)], [beginX+(3*dx), beginY+(3*dy)],
@@ -210,7 +201,7 @@ function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regr
             color: '#AAAAAA',
             dashStyle: 'dash',
             width: 1,
-            value: x.date,
+            value: x.date.getTime(),
             label: {
                 rotation: 90,
                 y: 20,
@@ -226,16 +217,16 @@ function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regr
     //max should be the maximum of the maximum of datapoints, and maximum of markers.
     let max;
     if(markers){
-
-
-        let mx = markers[0].value.getTime();
+        console.log(markers);
+        
+        let mx = markers[0].value;
         markers.forEach(i => {
-            if( i.value.getTime() > mx){
-                mx = i.value.getTime()
+            if( i.value > mx){
+                mx = i.value
             }
         });
 
-        max = Math.max(new Date(data[0].dtime).getTime() , mx) + 1000 * 60 * 60 * 3;
+        max = Math.max(new Date(data[0].time).getTime() , mx) + 1000 * 60 * 60 * 10;
 
     } else {
         max = null;
@@ -409,7 +400,7 @@ function drawChart(title, renderingDiv, data, average, markers, xPlotBands, regr
 function getData(data){
 
     let arr = data.map((x)=>{
-        return [new Date(x.dtime.replace(' ','T')+'Z').getTime(), x.temperature]
+        return [new Date(x.time).getTime(), x.temperature]
     })
   
     return arr.reverse();
