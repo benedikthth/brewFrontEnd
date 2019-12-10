@@ -1,6 +1,6 @@
 'use strict';
-// let path = 'http://www.brewApi.spock.is';
-    let path = 'http://localhost:9099'
+let path = 'http://brewApi.spock.is';
+    // let path = 'http://localhost:9099'
 let lastChecked = null;
 
 
