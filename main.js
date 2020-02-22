@@ -61,7 +61,7 @@ function init(){
     });
 
 
-    $.when( $.ajax( {url:`${path}/temperature`, dataType:'json'}),
+    $.when( $.ajax( {url:`${path}/temperature?hourLimit=${3*7*24}`, dataType:'json'}),
             // $.ajax(`${path}/temperature/average`),
             $.ajax({url:`${path}/temperature/regression`, dataType:'json'})
     ).done((d, reg)=>{
